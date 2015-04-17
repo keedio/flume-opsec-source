@@ -12,6 +12,8 @@
         <flume.version>1.5.2</flume.version>
         <juniversalchardet.version>1.0.3</juniversalchardet.version>
         <jackson.version>1.9.13</jackson.version>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
 
     <build>

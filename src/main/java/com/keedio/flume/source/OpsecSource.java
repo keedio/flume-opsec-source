@@ -136,7 +136,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
             try {
                 getChannelProcessor().processEvent(event);
                 metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_OK));
-                
+
                 return Status.READY;
             }catch (ChannelException e) {
                 metricsController.manage(new MetricsEvent(MetricsEvent.DELIVERY_ERROR));
