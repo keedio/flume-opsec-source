@@ -4,6 +4,7 @@ import com.google.common.base.Splitter;
 import com.google.common.io.Files;
 import com.keedio.flume.source.metrics.MetricsController;
 import com.keedio.flume.source.metrics.MetricsEvent;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
@@ -16,9 +17,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 /**
  * <p>
@@ -54,7 +56,7 @@ import java.util.regex.Pattern;
  * @author  Luca Rosellini <lrosellini@keedio.com>
  */
 public class OpsecSource extends AbstractSource implements Configurable, PollableSource {
-    private static Logger logger = Logger.getLogger("com.keedio.flume.source.OpsecSource");
+    private Logger logger = Logger.getLogger(getClass());
 
     String[] fw1LogGrabberBinary = new String[]{"/usr/bin/fw1-loggrabber"};
 
@@ -73,6 +75,8 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
 
     private ProcessBuilder processBuilder;
     private Process logGrabberProcess;
+    private OutputStreamGobbler outputStreamGobbler;
+    private ErrorStreamGobbler errorStreamGobbler;
 
     /**
      * We need only the following property:
@@ -87,36 +91,49 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
 
         if (StringUtils.isEmpty(logGrabberConfPathProp)){
             throw new ConfigurationException("loggrabber.config.path property cannot be empty");
+        } else {
+            logger.debug(format("loggrabber.config.path found with value: %s", logGrabberConfPathProp));
         }
 
         File logGrabberConfPath = new File(logGrabberConfPathProp);
         if (!logGrabberConfPath.exists()){
-            throw new ConfigurationException(String.format("directory '%s' must exist", logGrabberConfPathProp));
+            throw new ConfigurationException(format("directory '%s' must exist", logGrabberConfPathProp));
+        } else {
+            logger.debug(format("'%s' directory exists", logGrabberConfPath));
         }
 
         File leaConf = new File(logGrabberConfPath, LEA_CONF_FILENAME);
         if (!leaConf.exists()){
-            throw new ConfigurationException(String.format("file '%s' must exist", leaConf.getAbsolutePath()));
+            throw new ConfigurationException(format("file '%s' must exist", leaConf.getAbsolutePath()));
+        } else {
+            logger.debug(format("'%s' exists", leaConf.getAbsolutePath()));
         }
 
         File logGrabberConf = new File(logGrabberConfPath, LOGGRABBER_CONF_FILENAME);
         if (!logGrabberConf.exists()){
-            throw new ConfigurationException(String.format("file '%s' must exist", logGrabberConf.getAbsolutePath()));
+            throw new ConfigurationException(format("file '%s' must exist", logGrabberConf.getAbsolutePath()));
+        }else {
+            logger.debug(format("'%s' exists", logGrabberConf.getAbsolutePath()));
         }
 
         File myTempDir = Files.createTempDir();
 
-        logger.info(String.format("Using '%s' as loggrabber temp directory", myTempDir.getAbsolutePath()));
+        logger.debug(format("Using '%s' as loggrabber temp directory", myTempDir.getAbsolutePath()));
 
+        logger.debug(format("Using '%s' logGrabber binary", ArrayUtils.toString(fw1LogGrabberBinary)));
         processBuilder = new ProcessBuilder().command(fw1LogGrabberBinary);
 
         Map<String, String> env = processBuilder.environment();
         env.put(LOGGRABBER_TEMP_PATH, myTempDir.getAbsolutePath());
         env.put(LOGGRABBER_CONFIG_PATH, logGrabberConfPathProp);
+        logger.debug(format("Setting process environment: %s", env));
 
-
+        processBuilder.redirectErrorStream(true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Status process() throws EventDeliveryException {
         String line = queue.poll();
@@ -128,7 +145,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 event.setBody(processLogGrabberMessage(line, mapper));
             } catch (IOException e) {
                 metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_ERROR));
-                logger.error("Cannot process message: "+line+"\n", e);
+                logger.error(format("Cannot process message: %s\n", line), e);
 
                 throw new EventDeliveryException(e);
             }
@@ -140,7 +157,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 return Status.READY;
             }catch (ChannelException e) {
                 metricsController.manage(new MetricsEvent(MetricsEvent.DELIVERY_ERROR));
-                logger.error("Cannot process message: "+line+"\n", e);
+                logger.error(format("Cannot process message: %s\n", line), e);
 
                 throw e;
             }
@@ -219,14 +236,22 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         super.start();
 
         try {
+            logger.info(format("Executing %s binary", ArrayUtils.toString(fw1LogGrabberBinary)));
             logGrabberProcess = processBuilder.start();
         } catch (IOException e) {
-            throw new ConfigurationException("Cannot start embedded "+ fw1LogGrabberBinary,e);
+            throw new ConfigurationException(format("Cannot start embedded %s", ArrayUtils.toString(fw1LogGrabberBinary)),e);
         }
 
         metricsController.start();
-        StreamGobbler outputGobbler = new StreamGobbler(logGrabberProcess.getInputStream(), "OUTPUT");
-        outputGobbler.run();
+
+        outputStreamGobbler = new OutputStreamGobbler(logGrabberProcess.getInputStream());
+        errorStreamGobbler = new ErrorStreamGobbler(logGrabberProcess.getErrorStream());
+
+        logger.debug("Redirecting output stream");
+        outputStreamGobbler.start();
+
+        logger.debug("Redirecting error stream");
+        errorStreamGobbler.start();
     }
 
     /**
@@ -263,6 +288,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 throw new IllegalStateException("fw1LogGrabber has terminated with exit status: " + exitValue);
         } catch (IllegalThreadStateException e) {
             // ok, do nothing
+            logger.trace(String.format("%s not yet terminated", ArrayUtils.toString(fw1LogGrabberBinary)));
         }
     }
 
@@ -270,18 +296,19 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
      * Retrieves the stream of chars from the embedded process standard output and pushes it
      * to the in-memory queue.
      */
-    class StreamGobbler extends Thread {
-        InputStream is;
-        String type;
+    class OutputStreamGobbler extends Thread {
+        private Logger logger = Logger.getLogger(getClass());
+        private InputStream is;
 
-        private StreamGobbler(InputStream is, String type) {
+        private OutputStreamGobbler(InputStream is) {
             this.is = is;
-            this.type = type;
         }
 
         @Override
         public void run() {
             try {
+                logger.debug("Starting output stream gobbler");
+
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);
                 String line = null;
@@ -290,7 +317,33 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 }
             }
             catch (IOException ioe) {
-                ioe.printStackTrace();
+                logger.error(ioe);
+            }
+        }
+    }
+
+    class ErrorStreamGobbler extends Thread{
+        private Logger logger = Logger.getLogger(getClass());
+        private InputStream is;
+
+        private ErrorStreamGobbler(InputStream is) {
+            this.is = is;
+        }
+
+        @Override
+        public void run() {
+            try {
+                logger.debug("Starting error stream gobbler");
+
+                InputStreamReader isr = new InputStreamReader(is);
+                BufferedReader br = new BufferedReader(isr);
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    logger.error(line);
+                }
+            }
+            catch (IOException ioe) {
+                logger.error(ioe);
             }
         }
     }
