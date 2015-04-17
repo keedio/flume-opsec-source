@@ -45,6 +45,7 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
         deliveryOk = metrics.meter("deliveryOk");
         processError = metrics.meter("processError");
         deliveryError = metrics.meter("deliveryError");
+        processTime = metrics.histogram("processTime");
     }
 
     /**
