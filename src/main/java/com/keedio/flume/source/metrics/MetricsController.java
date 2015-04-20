@@ -12,10 +12,10 @@ import org.apache.flume.instrumentation.MonitoredCounterGroup;
  */
 public class MetricsController extends MonitoredCounterGroup implements MetricsMBean {
 
-    private Meter deliveryOk;
-    private Meter processError;
-    private Meter deliveryError;
-    private Histogram processTime;
+    Meter deliveryOk;
+    Meter processError;
+    Meter deliveryError;
+    Histogram processTime;
 
     private MetricRegistry metrics;
 
@@ -74,6 +74,8 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
             case MetricsEvent.PROCESS_TIME:
                 processTime.update(event.getValue());
                 break;
+            default:
+                throw new IllegalArgumentException("Event type not recognized");
         }
     }
 
