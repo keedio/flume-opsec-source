@@ -26,7 +26,7 @@ The resulting JSON will be:
 
 	{time:"17Apr2015  8:10:16",action:"accept",orig:"localhost"}
 
-**Important**: this Source assumes `fw1-loggrabber` produces messages whose fields are separated by the ' char.
+**Important**: this Source assumes `fw1-loggrabber` produces messages whose fields are separated by the pipe char (|).
 This source correctly parses messages where the field value contains an escaped pipe char `\|`.
 
 If the fw1 loggrabber process dies, the source tries to flush the in-memory queue to the channel ocessor before killing itself.
