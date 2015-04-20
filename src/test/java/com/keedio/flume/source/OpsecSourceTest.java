@@ -3,10 +3,7 @@ package com.keedio.flume.source;
 import com.google.common.io.Files;
 import com.keedio.flume.source.metrics.MetricsController;
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.PollableSource;
+import org.apache.flume.*;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.log4j.Logger;
@@ -191,7 +188,7 @@ public class OpsecSourceTest {
         assertEquals("55850", mapJson.get("s_port"));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = FlumeException.class)
     public void testSourceProcessStoppedAbruptly() throws IOException, EventDeliveryException, InterruptedException, URISyntaxException {
         doTestProcess();
 
