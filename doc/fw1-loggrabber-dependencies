@@ -1,0 +1,16 @@
+fw1-loggrabber dependencies
+
+pre-built i686 fw1-loggrabber package:
+    tar.gz: http://jenkins.keedio.com:8081/nexus/service/local/repositories/releases/content/com/keedio/opsec/fw1-loggrabber/2.0/fw1-loggrabber-2.0-bin.tar.gz
+
+dependencies:
+
+- opsec-tools:
+    tar.gz: http://downloads.sourceforge.net/project/fw1-loggrabber/opsec-tools/NG-FP3/opsec-tools.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Ffw1-loggrabber%2Ffiles%2Fopsec-tools%2FNG-FP3%2Fopsec-tools.tar.gz%2Fdownload&ts=1429525318&use_mirror=heanet
+	epel dependencies:
+		pam.i686
+
+- epel dependencies:
+    compat-libstdc++-33.i686
+    elfutils-libelf.i686
+    libstdc++.i686
