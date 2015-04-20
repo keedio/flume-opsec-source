@@ -38,6 +38,10 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
 
             "source.mean.process.time", "source.total.file.events"};
 
+    /**
+     * Default constructor.
+     *
+     */
     public MetricsController() {
         super(Type.SOURCE, MetricsController.class.getName(), ATTRIBUTES);
 

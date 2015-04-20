@@ -14,20 +14,37 @@ public class MetricsEvent {
 	
 	private int code;
 	private long value = -1;
-	
+
+    /**
+     * Public constructor.
+     *
+     * @param code event identifier.
+     */
 	public MetricsEvent(int code) {
 		this.code = code;
 	}
-	
+
+    /**
+     * Public constructor.
+     *
+     * @param code event identifier.
+     * @param value event value.
+     */
 	public MetricsEvent(int code, long value) {
 		this.code = code;
 		this.value = value;
 	}
 
+    /**
+     * @return event identifier.
+     */
 	public int getCode() {
 		return code;
 	}
-	
+
+    /**
+     * @return event value, -1 if no value has been set.
+     */
 	public long getValue() {
 		return this.value;
 	}
