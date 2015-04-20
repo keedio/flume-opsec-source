@@ -218,6 +218,8 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
             }
 
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                LOG.trace(fields);
+
                 mapper.writeValue(baos, fields);
                 return baos.toByteArray();
             }
