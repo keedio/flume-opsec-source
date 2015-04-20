@@ -6,7 +6,7 @@
 
     <groupId>com.keedio.flume.source</groupId>
     <artifactId>flume-opsec-source</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <properties>
         <flume.version>1.5.2</flume.version>
