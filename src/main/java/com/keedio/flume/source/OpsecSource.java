@@ -285,7 +285,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
             int exitValue = logGrabberProcess.exitValue();
 
             if (getLifecycleState() != LifecycleState.STOP)
-                throw new IllegalStateException("fw1LogGrabber has terminated with exit status: " + exitValue);
+                throw new FlumeException(new IllegalStateException("fw1LogGrabber has terminated with exit status: " + exitValue));
         } catch (IllegalThreadStateException e) {
             // ok, do nothing
             logger.trace(String.format("%s not yet terminated", ArrayUtils.toString(fw1LogGrabberBinary)));
