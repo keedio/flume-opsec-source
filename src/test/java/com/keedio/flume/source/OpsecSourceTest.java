@@ -13,10 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,10 +22,8 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * Test OpsecSource
@@ -53,7 +48,7 @@ public class OpsecSourceTest {
         mockChannelProcessor = mock(ChannelProcessor.class);
 
         source.metricsController = metricsController;
-        source.fw1LogGrabberBinary = new String[]{"/bin/cat",""};
+        source.fw1LogGrabberBinary = new String[]{"/bin/cat","", ""};
         source.setChannelProcessor(mockChannelProcessor);
 
     }
@@ -218,5 +213,26 @@ public class OpsecSourceTest {
         source.fw1LogGrabberBinary[1] = fw.getAbsolutePath();
         source.configure(context);
         source.start();
+    }
+
+    @Test
+    public void testProcessStdErr() throws IOException {
+        source.fw1LogGrabberBinary[1] = "not_existant_file";
+
+        Context context = mock(Context.class);
+
+        File tmpDir = Files.createTempDir();
+        when(context.getString("loggrabber.config.path")).thenReturn(tmpDir.getAbsolutePath());
+        File leaConf = new File(tmpDir, OpsecSource.LEA_CONF_FILENAME);
+        File loggrabberConf = new File(tmpDir,OpsecSource.LOGGRABBER_CONF_FILENAME);
+        leaConf.createNewFile();
+        loggrabberConf.createNewFile();
+        source.configure(context);
+
+        Logger mockLogger = mock(Logger.class);
+        source.setErrorLogger(mockLogger);
+        source.start();
+
+        verify(mockLogger, atLeastOnce()).error(anyString());
     }
 }

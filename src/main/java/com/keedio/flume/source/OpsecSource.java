@@ -78,6 +78,8 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
     private OutputStreamGobbler outputStreamGobbler;
     private ErrorStreamGobbler errorStreamGobbler;
 
+    private Logger errorLogger;
+
     /**
      * We need only the following property:
      * loggrabber.config.path
@@ -127,8 +129,6 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         env.put(LOGGRABBER_TEMP_PATH, myTempDir.getAbsolutePath());
         env.put(LOGGRABBER_CONFIG_PATH, logGrabberConfPathProp);
         LOG.debug(format("Setting process environment: %s", env));
-
-        processBuilder.redirectErrorStream(true);
     }
 
     /**
@@ -324,10 +324,13 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
 
     class ErrorStreamGobbler extends Thread{
         private Logger logger = Logger.getLogger(getClass());
+        private Logger outputLogger;
+
         private InputStream is;
 
         private ErrorStreamGobbler(InputStream is) {
             this.is = is;
+            outputLogger = errorLogger == null?logger:errorLogger;
         }
 
         @Override
@@ -339,12 +342,16 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 BufferedReader br = new BufferedReader(isr);
                 String line = null;
                 while ((line = br.readLine()) != null) {
-                    logger.error(line);
+                    outputLogger.error(line);
                 }
             }
             catch (IOException ioe) {
                 logger.error(ioe);
             }
         }
+    }
+
+    public void setErrorLogger(Logger errorLogger) {
+        this.errorLogger = errorLogger;
     }
 }
