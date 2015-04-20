@@ -56,7 +56,7 @@ import static java.lang.String.format;
  * @author  Luca Rosellini <lrosellini@keedio.com>
  */
 public class OpsecSource extends AbstractSource implements Configurable, PollableSource {
-    private Logger logger = Logger.getLogger(getClass());
+    private static final Logger LOG = Logger.getLogger("com.keedio.flume.source.OpsecSource");
 
     String[] fw1LogGrabberBinary = new String[]{"/usr/bin/fw1-loggrabber"};
 
@@ -92,41 +92,41 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         if (StringUtils.isEmpty(logGrabberConfPathProp)){
             throw new ConfigurationException("loggrabber.config.path property cannot be empty");
         } else {
-            logger.debug(format("loggrabber.config.path found with value: %s", logGrabberConfPathProp));
+            LOG.debug(format("loggrabber.config.path found with value: %s", logGrabberConfPathProp));
         }
 
         File logGrabberConfPath = new File(logGrabberConfPathProp);
         if (!logGrabberConfPath.exists()){
             throw new ConfigurationException(format("directory '%s' must exist", logGrabberConfPathProp));
         } else {
-            logger.debug(format("'%s' directory exists", logGrabberConfPath));
+            LOG.debug(format("'%s' directory exists", logGrabberConfPath));
         }
 
         File leaConf = new File(logGrabberConfPath, LEA_CONF_FILENAME);
         if (!leaConf.exists()){
             throw new ConfigurationException(format("file '%s' must exist", leaConf.getAbsolutePath()));
         } else {
-            logger.debug(format("'%s' exists", leaConf.getAbsolutePath()));
+            LOG.debug(format("'%s' exists", leaConf.getAbsolutePath()));
         }
 
         File logGrabberConf = new File(logGrabberConfPath, LOGGRABBER_CONF_FILENAME);
         if (!logGrabberConf.exists()){
             throw new ConfigurationException(format("file '%s' must exist", logGrabberConf.getAbsolutePath()));
         }else {
-            logger.debug(format("'%s' exists", logGrabberConf.getAbsolutePath()));
+            LOG.debug(format("'%s' exists", logGrabberConf.getAbsolutePath()));
         }
 
         File myTempDir = Files.createTempDir();
 
-        logger.debug(format("Using '%s' as loggrabber temp directory", myTempDir.getAbsolutePath()));
+        LOG.debug(format("Using '%s' as loggrabber temp directory", myTempDir.getAbsolutePath()));
 
-        logger.debug(format("Using '%s' logGrabber binary", ArrayUtils.toString(fw1LogGrabberBinary)));
+        LOG.debug(format("Using '%s' logGrabber binary", ArrayUtils.toString(fw1LogGrabberBinary)));
         processBuilder = new ProcessBuilder().command(fw1LogGrabberBinary);
 
         Map<String, String> env = processBuilder.environment();
         env.put(LOGGRABBER_TEMP_PATH, myTempDir.getAbsolutePath());
         env.put(LOGGRABBER_CONFIG_PATH, logGrabberConfPathProp);
-        logger.debug(format("Setting process environment: %s", env));
+        LOG.debug(format("Setting process environment: %s", env));
 
         processBuilder.redirectErrorStream(true);
     }
@@ -145,7 +145,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 event.setBody(processLogGrabberMessage(line, mapper));
             } catch (IOException e) {
                 metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_ERROR));
-                logger.error(format("Cannot process message: %s\n", line), e);
+                LOG.error(format("Cannot process message: %s%n", line), e);
 
                 throw new EventDeliveryException(e);
             }
@@ -157,7 +157,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 return Status.READY;
             }catch (ChannelException e) {
                 metricsController.manage(new MetricsEvent(MetricsEvent.DELIVERY_ERROR));
-                logger.error(format("Cannot process message: %s\n", line), e);
+                LOG.error(format("Cannot process message: %s%n", line), e);
 
                 throw e;
             }
@@ -224,7 +224,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         } finally {
             long t1 = System.currentTimeMillis();
 
-            metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_TIME, (t1-t0)));
+            metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_TIME, t1-t0));
         }
     }
 
@@ -236,7 +236,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         super.start();
 
         try {
-            logger.info(format("Executing %s binary", ArrayUtils.toString(fw1LogGrabberBinary)));
+            LOG.info(format("Executing %s binary", ArrayUtils.toString(fw1LogGrabberBinary)));
             logGrabberProcess = processBuilder.start();
         } catch (IOException e) {
             throw new ConfigurationException(format("Cannot start embedded %s", ArrayUtils.toString(fw1LogGrabberBinary)),e);
@@ -247,10 +247,10 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         outputStreamGobbler = new OutputStreamGobbler(logGrabberProcess.getInputStream());
         errorStreamGobbler = new ErrorStreamGobbler(logGrabberProcess.getErrorStream());
 
-        logger.debug("Redirecting output stream");
+        LOG.debug("Redirecting output stream");
         outputStreamGobbler.start();
 
-        logger.debug("Redirecting error stream");
+        LOG.debug("Redirecting error stream");
         errorStreamGobbler.start();
     }
 
@@ -270,7 +270,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         try {
             logGrabberProcess.waitFor();
         } catch (InterruptedException e) {
-            logger.error(e);
+            LOG.error(e);
         }
     }
 
@@ -288,7 +288,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
                 throw new FlumeException(new IllegalStateException("fw1LogGrabber has terminated with exit status: " + exitValue));
         } catch (IllegalThreadStateException e) {
             // ok, do nothing
-            logger.trace(String.format("%s not yet terminated", ArrayUtils.toString(fw1LogGrabberBinary)));
+            LOG.trace(String.format("%s not yet terminated", ArrayUtils.toString(fw1LogGrabberBinary)));
         }
     }
 
