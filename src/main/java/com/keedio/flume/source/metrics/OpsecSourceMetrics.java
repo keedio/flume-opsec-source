@@ -10,12 +10,12 @@ import org.apache.flume.instrumentation.MonitoredCounterGroup;
  * Extends MonitoredCounterGroup class to allow the publication of JMX metrics
  * following the mechanism established by Flume.
  */
-public class MetricsController extends MonitoredCounterGroup implements MetricsMBean {
+public class OpsecSourceMetrics extends MonitoredCounterGroup implements MetricsMBean {
 
-    private Meter deliveryOk;
-    private Meter processError;
-    private Meter deliveryError;
-    private Histogram processTime;
+    Meter deliveryOk;
+    Meter processError;
+    Meter deliveryError;
+    Histogram processTime;
 
     private MetricRegistry metrics;
 
@@ -38,8 +38,12 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
 
             "source.mean.process.time", "source.total.file.events"};
 
-    public MetricsController() {
-        super(Type.SOURCE, MetricsController.class.getName(), ATTRIBUTES);
+    /**
+     * Default constructor.
+     *
+     */
+    public OpsecSourceMetrics() {
+        super(Type.SOURCE, OpsecSourceMetrics.class.getName(), ATTRIBUTES);
 
         metrics = new MetricRegistry();
         deliveryOk = metrics.meter("deliveryOk");
@@ -74,6 +78,8 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
             case MetricsEvent.PROCESS_TIME:
                 processTime.update(event.getValue());
                 break;
+            default:
+                throw new IllegalArgumentException("Event type not recognized");
         }
     }
 
