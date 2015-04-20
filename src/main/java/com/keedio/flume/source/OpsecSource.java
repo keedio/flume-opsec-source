@@ -2,7 +2,7 @@ package com.keedio.flume.source;
 
 import com.google.common.base.Splitter;
 import com.google.common.io.Files;
-import com.keedio.flume.source.metrics.MetricsController;
+import com.keedio.flume.source.metrics.OpsecSourceMetrics;
 import com.keedio.flume.source.metrics.MetricsEvent;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -57,6 +57,7 @@ import static java.lang.String.format;
  */
 public class OpsecSource extends AbstractSource implements Configurable, PollableSource {
     private static final Logger LOG = Logger.getLogger("com.keedio.flume.source.OpsecSource");
+    private static Logger errorLogger;
 
     String[] fw1LogGrabberBinary = new String[]{"/usr/bin/fw1-loggrabber"};
 
@@ -71,14 +72,13 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
 
     private final static Pattern LOG_SPLIT_PATTERN = Pattern.compile("(?<!\\\\)\\|");
 
-    MetricsController metricsController = new MetricsController();
+    OpsecSourceMetrics opsecSourceMetrics = new OpsecSourceMetrics();
 
     private ProcessBuilder processBuilder;
     private Process logGrabberProcess;
     private OutputStreamGobbler outputStreamGobbler;
     private ErrorStreamGobbler errorStreamGobbler;
 
-    private Logger errorLogger;
 
     /**
      * We need only the following property:
@@ -144,7 +144,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
             try {
                 event.setBody(processLogGrabberMessage(line, mapper));
             } catch (IOException e) {
-                metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_ERROR));
+                opsecSourceMetrics.manage(new MetricsEvent(MetricsEvent.PROCESS_ERROR));
                 LOG.error(format("Cannot process message: %s%n", line), e);
 
                 throw new EventDeliveryException(e);
@@ -152,11 +152,11 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
 
             try {
                 getChannelProcessor().processEvent(event);
-                metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_OK));
+                opsecSourceMetrics.manage(new MetricsEvent(MetricsEvent.PROCESS_OK));
 
                 return Status.READY;
             }catch (ChannelException e) {
-                metricsController.manage(new MetricsEvent(MetricsEvent.DELIVERY_ERROR));
+                opsecSourceMetrics.manage(new MetricsEvent(MetricsEvent.DELIVERY_ERROR));
                 LOG.error(format("Cannot process message: %s%n", line), e);
 
                 throw e;
@@ -226,7 +226,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
         } finally {
             long t1 = System.currentTimeMillis();
 
-            metricsController.manage(new MetricsEvent(MetricsEvent.PROCESS_TIME, t1-t0));
+            opsecSourceMetrics.manage(new MetricsEvent(MetricsEvent.PROCESS_TIME, t1-t0));
         }
     }
 
@@ -244,7 +244,7 @@ public class OpsecSource extends AbstractSource implements Configurable, Pollabl
             throw new ConfigurationException(format("Cannot start embedded %s", ArrayUtils.toString(fw1LogGrabberBinary)),e);
         }
 
-        metricsController.start();
+        opsecSourceMetrics.start();
 
         outputStreamGobbler = new OutputStreamGobbler(logGrabberProcess.getInputStream());
         errorStreamGobbler = new ErrorStreamGobbler(logGrabberProcess.getErrorStream());

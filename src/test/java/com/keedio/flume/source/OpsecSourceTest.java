@@ -1,7 +1,7 @@
 package com.keedio.flume.source;
 
 import com.google.common.io.Files;
-import com.keedio.flume.source.metrics.MetricsController;
+import com.keedio.flume.source.metrics.OpsecSourceMetrics;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.*;
 import org.apache.flume.channel.ChannelProcessor;
@@ -16,7 +16,6 @@ import org.mockito.ArgumentCaptor;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,10 +43,10 @@ public class OpsecSourceTest {
     public void initSource(){
         source = new OpsecSource();
         channelCaptor = ArgumentCaptor.forClass(Event.class);
-        MetricsController metricsController = mock(MetricsController.class);
+        OpsecSourceMetrics opsecSourceMetrics = mock(OpsecSourceMetrics.class);
         mockChannelProcessor = mock(ChannelProcessor.class);
 
-        source.metricsController = metricsController;
+        source.opsecSourceMetrics = opsecSourceMetrics;
         source.fw1LogGrabberBinary = new String[]{"/bin/cat","", ""};
         source.setChannelProcessor(mockChannelProcessor);
 

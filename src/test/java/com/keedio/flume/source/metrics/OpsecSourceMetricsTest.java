@@ -11,13 +11,13 @@ import org.mockito.Mockito;
 /**
  * Created by Luca Rosellini <lrosellini@keedio.com> on 20/4/15.
  */
-public class MetricsControllerTest {
+public class OpsecSourceMetricsTest {
 
-    private MetricsController controller;
+    private OpsecSourceMetrics controller;
 
     @Before
     public void setup(){
-        controller = new MetricsController();
+        controller = new OpsecSourceMetrics();
 
         controller.deliveryOk = Mockito.mock(Meter.class);
         controller.processError = Mockito.mock(Meter.class);

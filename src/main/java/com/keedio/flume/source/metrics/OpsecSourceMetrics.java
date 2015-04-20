@@ -10,7 +10,7 @@ import org.apache.flume.instrumentation.MonitoredCounterGroup;
  * Extends MonitoredCounterGroup class to allow the publication of JMX metrics
  * following the mechanism established by Flume.
  */
-public class MetricsController extends MonitoredCounterGroup implements MetricsMBean {
+public class OpsecSourceMetrics extends MonitoredCounterGroup implements MetricsMBean {
 
     Meter deliveryOk;
     Meter processError;
@@ -42,8 +42,8 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
      * Default constructor.
      *
      */
-    public MetricsController() {
-        super(Type.SOURCE, MetricsController.class.getName(), ATTRIBUTES);
+    public OpsecSourceMetrics() {
+        super(Type.SOURCE, OpsecSourceMetrics.class.getName(), ATTRIBUTES);
 
         metrics = new MetricRegistry();
         deliveryOk = metrics.meter("deliveryOk");
