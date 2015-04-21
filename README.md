@@ -9,7 +9,7 @@ The in-memory queue is then polled by Flume when the process() method is called.
 This Source produces event whose body is a byte array representing an UTF-8 json string.<br/>
 Example, let's assume CheckPoint sends the following message:
 
-	time=17Apr2015  8:10:16|action=accept|orig=localhost|i/f_dir=inbound|i/f_name=Exp2-1.715<br/>
+	time=17Apr2015  8:10:16|action=accept|orig=localhost|i/f_dir=inbound|i/f_name=Exp2-1.715
 then this source will produce the following json:<br/>
 
 	{time:"17Apr2015  8:10:16",action:"accept",orig:"localhost",i/f_dir="inbound",i/f_name="Exp2-1.715"}
