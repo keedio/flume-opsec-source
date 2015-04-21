@@ -9,7 +9,7 @@ The in-memory queue is then polled by Flume when the process() method is called.
 This Source produces event whose body is a byte array representing an UTF-8 json string.<br/>
 Example, let's assume CheckPoint sends the following message:
 
-	time=17Apr2015  8:10:16|action=accept|orig=localhost|i/f_dir=inbound|i/f_name=Exp2-1.715<br/>
+	time=17Apr2015  8:10:16|action=accept|orig=localhost|i/f_dir=inbound|i/f_name=Exp2-1.715
 then this source will produce the following json:<br/>
 
 	{time:"17Apr2015  8:10:16",action:"accept",orig:"localhost",i/f_dir="inbound",i/f_name="Exp2-1.715"}
@@ -24,16 +24,16 @@ Example:
 
 The resulting JSON will be:
 
-	{time:"17Apr2015  8:10:16",action:"accept",orig:"localhost"}
+	{time:"17Apr2015  8:10:16",action:"",orig:"localhost"}
 
-**Important**: this Source assumes `fw1-loggrabber` produces messages whose fields are separated by the pipe char (|).
+**Important**: this source assumes `fw1-loggrabber` produces messages whose fields are separated by the pipe char (|).
 This source correctly parses messages where the field value contains an escaped pipe char `\|`.
 
-If the fw1 loggrabber process dies, the source tries to flush the in-memory queue to the channel ocessor before killing itself.
+If the fw1 loggrabber process dies, the source tries to flush the in-memory queue to the channel processor before dying.
 
 ## Configuration
 
-You need to configure the property `loggrabber.config.path` in the flume context to point to an existing folder containing both `lea.conf` and `fw1-loggrabber.conf`.
+You need to configure the property `loggrabber.config.path` in the flume context to point to an existing folder containing both `lea.conf` and `fw1-loggrabber.conf` (config file names are not parametrizable).
 
 ### Example configuration
 
@@ -66,33 +66,34 @@ Example LEA configuration `lea.conf`:
 	
 Example `fw1-loggrabber.conf`:
 
-	# DEBUG_LEVEL=<debuglevel>
-	DEBUG_LEVEL="0"
+<pre><code># DEBUG_LEVEL=&lt;debuglevel&gt;
+DEBUG_LEVEL="0"					<b># DO NOT CHANGE THIS</b>
 
-	# FW1_LOGFILE=<Name of FW1-Logfilename>
-	FW1_LOGFILE="fw.log"
+# FW1_LOGFILE=&lt;Name of FW1-Logfilename&gt;
+FW1_LOGFILE="fw.log"
 
-	# FW1_OUTPUT=<files|logs>
-	FW1_OUTPUT="logs"
+# FW1_OUTPUT=&lt;files|logs&gt;
+FW1_OUTPUT="logs"
 
-	# FW1_TYPE=<ng|2000>
-	FW1_TYPE="ng"
+# FW1_TYPE=&lt;ng|2000&gt;
+FW1_TYPE="ng"
 
-	# FW1_MODE=<audit|normal>
-	FW1_MODE="normal"
+# FW1_MODE=&lt;audit|normal&gt;
+FW1_MODE="normal"
 
-	# ONLINE_MODE=<yes|no>
-	ONLINE_MODE="yes"
+# ONLINE_MODE=&lt;yes|no&gt;
+ONLINE_MODE="yes"
 	
-	# RESOLVE_MODE=<yes|no>
-	RESOLVE_MODE="yes"
+# RESOLVE_MODE=&lt;yes|no&gt;
+RESOLVE_MODE="yes"
 
-	# RECORD_SEPARATOR=<char>
-	RECORD_SEPARATOR="|"
+# RECORD_SEPARATOR=&lt;char&gt;
+RECORD_SEPARATOR="|"			<b># DO NOT CHANGE THIS</b>
 
-	# LOGGING_CONFIGURATION=<screen|file|syslog>
-	LOGGING_CONFIGURATION=screen
-	
+# LOGGING_CONFIGURATION=&lt;screen|file|syslog&gt;
+LOGGING_CONFIGURATION=screen	<b># DO NOT CHANGE THIS</b>
+</code></pre>
+
 **Important:** it's mandatory to set `LOGGING_CONFIGURATION=screen` and `DEBUG_LEVEL="0"` since the OPSEC source will parse log messages from STDOUT.
 
 
