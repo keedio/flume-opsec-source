@@ -14,3 +14,6 @@ dependencies:
     compat-libstdc++-33.i686
     elfutils-libelf.i686
     libstdc++.i686
+
+- download command:
+curl -H "Accept:text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding:gzip, deflate" -H "Accept-Language:es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3" -H "Connection:keep-alive"  -H "Host:dl3.checkpoint.com" -H "User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:37.0) Gecko/20100101 Firefox/37.0" "http://dl3.checkpoint.com/paid/9a/OPSEC_SDK_6.0_Linux.zip?HashKey=1431599069_19a667b2039328e206551e216ef416c9&xtn=.zip" -o opsec-test.zip
